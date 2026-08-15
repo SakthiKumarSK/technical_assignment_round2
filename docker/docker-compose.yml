@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Task 1: URL Harvester & Knowledge Base (Django + DRF + SQLite + FAISS)
+  task1-knowledge-base:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.task1
+    container_name: task1_knowledge_base
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../task1_knowledge_base/vector_data:/app/vector_data
+      - ../task1_knowledge_base/db.sqlite3:/app/db.sqlite3
+    environment:
+      - DJANGO_DEBUG=True
+      - EMBEDDING_MODEL=all-MiniLM-L6-v2
+    restart: unless-stopped
+
+  # Task 2: Local LLM Document Q&A Chatbot (FastAPI + FAISS RAG)
+  task2-rag-chatbot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.task2
+    container_name: task2_rag_chatbot
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../task2_rag_chatbot/data:/app/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - DEFAULT_LLM_MODEL=llama3
+      - EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  # Local Ollama Service for Open-Source LLMs
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_llm_service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_models:

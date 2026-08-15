@@ -1,0 +1,25 @@
+# Dockerfile for Task 1: Django + DRF + SQLite + FAISS
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies for build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Task 1 application code
+COPY task1_knowledge_base/ /app/
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=kb_project.settings
+
+# Run migrations and start server
+EXPOSE 8000
+CMD ["sh", "-c", "python manage.py makemigrations harvester && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]

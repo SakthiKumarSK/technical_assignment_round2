@@ -1,0 +1,10 @@
+Executive Profiles & Leadership Bios - TechCorp Global
+
+1. Sundar Pichai - Chief Executive Officer
+Sundar Pichai is the CEO of Alphabet and its subsidiary Google. He joined Google in 2004, leading product management and innovation efforts for Google Chrome, ChromeOS, and Google Drive. In August 2015, he was appointed CEO of Google, and later in December 2019, he became the CEO of Alphabet Inc. Pichai holds a B.Tech from IIT Kharagpur, an M.S. from Stanford University, and an MBA from the Wharton School of the University of Pennsylvania.
+
+2. Satya Nadella - Chairman and Chief Executive Officer
+Satya Nadella is the Chairman and CEO of Microsoft. Before becoming CEO in February 2014, he was Executive Vice President of Microsoft's Cloud and Enterprise Group, where he led the transformation to cloud infrastructure and services. Nadella joined Microsoft in 1992 and earned a bachelor's degree in electrical engineering from Mangalore University, an M.S. in computer science from the University of Wisconsin–Milwaukee, and an MBA from the University of Chicago Booth School of Business.
+
+3. Jensen Huang - President and Chief Executive Officer
+Jensen Huang co-founded Nvidia in 1993 and has served since its inception as President and Chief Executive Officer. Under his leadership, Nvidia pioneered GPU-accelerated computing and CUDA architecture, transforming the company into the primary compute engine for modern artificial intelligence, high-performance computing, and autonomous machines. Huang holds an electrical engineering degree from Oregon State University and a master's degree in electrical engineering from Stanford University.
