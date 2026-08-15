@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local LLM Document Q&A Chatbot (RAG) | Task 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/chat.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar / Knowledge Ingestion Center -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">RAG</div>
+        <div>
+          <div class="sidebar-title">Doc Q&A Engine</div>
+          <div style="font-size: 0.7rem; color: #94a3b8;">Task 2: Local LLM + Citations</div>
+        </div>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Ingestion Dropzone -->
+        <div>
+          <div class="sidebar-section-title">Ingest Documents</div>
+          <div class="sidebar-dropzone" id="doc-dropzone">
+            <div class="sidebar-dropzone-icon">&#128196;</div>
+            <div class="sidebar-dropzone-text">Upload Documents</div>
+            <div class="sidebar-dropzone-hint">PDF, DOCX, TXT, MD, CSV</div>
+            <input type="file" id="file-input" multiple accept=".pdf,.docx,.txt,.md,.csv" style="display: none;">
+          </div>
+          <div id="upload-status-text" style="font-size: 0.75rem; color: #60a5fa; margin-top: 0.4rem; display: none;"></div>
+        </div>
+
+        <!-- Ingested Documents List -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <div class="sidebar-section-title" style="margin-bottom: 0;">Indexed Files (<span id="doc-count">0</span>)</div>
+            <button id="clear-all-docs-btn" style="background: none; border: none; color: #ef4444; font-size: 0.7rem; cursor: pointer; text-decoration: underline;">Clear All</button>
+          </div>
+          <div class="doc-list" id="doc-list-container">
+            <div style="color: #64748b; font-size: 0.775rem; text-align: center; padding: 1rem 0;">No documents ingested yet.</div>
+          </div>
+        </div>
+
+        <!-- System Stats -->
+        <div style="margin-top: auto; border-top: 1px solid #1e293b; padding-top: 1rem;">
+          <div class="sidebar-section-title">Vector Knowledge Stats</div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: #94a3b8; margin-bottom: 0.25rem;">
+            <span>Total Vectors:</span>
+            <strong style="color: #e2e8f0;" id="stats-total-vectors">0</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: #94a3b8;">
+            <span>Embedding Model:</span>
+            <strong style="color: #60a5fa;">all-MiniLM-L6-v2</strong>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Chat Workspace -->
+    <main class="chat-container">
+      <!-- Header -->
+      <header class="chat-header">
+        <div class="chat-header-left">
+          <div class="status-indicator" id="system-status-badge">
+            <span class="status-dot"></span>
+            <span id="system-status-text">Backend Ready</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <label for="model-select" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Model:</label>
+            <select id="model-select" class="model-selector">
+              <option value="llama3">llama3 (Local)</option>
+              <option value="mistral">mistral</option>
+              <option value="phi3">phi3</option>
+              <option value="qwen2.5">qwen2.5</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="reset-chat-btn" style="background: none; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text-muted);">
+            Clear Chat
+          </button>
+          <a href="/docs" target="_blank" style="text-decoration: none; background: #f1f5f9; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 600; color: var(--text-main);">
+            FastAPI Docs
+          </a>
+        </div>
+      </header>
+
+      <!-- Message History List -->
+      <div class="chat-messages" id="chat-messages">
+        <!-- Initial Welcome Message -->
+        <div class="message-row assistant">
+          <div class="avatar assistant">&#9881;</div>
+          <div class="message-bubble">
+            <div class="message-text">
+Hello! I am your **Local RAG Document Assistant**.
+
+I answer questions based strictly on your uploaded files (PDF, DOCX, TXT, MD, CSV) with full **source citations** for every factual claim.
+
+Upload a document using the left sidebar, or select one of the suggested sample questions below!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer & Input Form -->
+      <div class="chat-input-container">
+        <!-- Suggestion Chips -->
+        <div class="suggestion-chips" id="suggestion-chips">
+          <div class="suggestion-chip" data-query="What is the strategic AI roadmap outlined in the document?">Strategic AI Roadmap</div>
+          <div class="suggestion-chip" data-query="What are the key executive roles and responsibilities mentioned?">Executive Responsibilities</div>
+          <div class="suggestion-chip" data-query="Summarize the key financial and performance highlights.">Financial Highlights</div>
+        </div>
+
+        <form class="chat-input-form" id="chat-form">
+          <textarea
+            id="chat-input"
+            class="chat-textarea"
+            placeholder="Ask a question grounded in your uploaded documents..."
+            rows="1"
+            required
+          ></textarea>
+          <button type="submit" class="send-btn" id="send-btn">
+            <span>Send</span> &#10148;
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/js/chat.js"></script>
+</body>
+</html>
