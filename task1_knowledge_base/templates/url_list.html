@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}SQLite Raw Data Inspector - URL Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 class="card-title">SQLite Database Inspector (Harvested URLs)</h1>
+      <p class="card-subtitle">
+        Viewing raw crawled HTML payloads, HTTP status codes, and vector index states.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="{% url 'upload' %}" class="btn btn-primary btn-sm">+ Upload More URLs</a>
+      <a href="{% url 'api_url_list' %}" target="_blank" class="btn btn-secondary btn-sm">View API JSON</a>
+    </div>
+  </div>
+
+  {% if urls %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>HTTP Status</th>
+            <th>Page Title & URL</th>
+            <th>Executive Entities</th>
+            <th>Vector Chunks</th>
+            <th>Indexed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in urls %}
+            <tr>
+              <td style="font-weight: 700; color: var(--color-text-muted);">#{{ u.id }}</td>
+              <td>
+                {% if u.http_status_code == 200 %}
+                  <span class="badge badge-success">200 OK</span>
+                {% elif u.http_status_code %}
+                  <span class="badge badge-danger">{{ u.http_status_code }}</span>
+                {% else %}
+                  <span class="badge badge-warning">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight: 600; color: var(--color-text-main);">{{ u.page_title|default:"(No Title)"|truncatechars:50 }}</div>
+                <a href="{{ u.url }}" target="_blank" style="font-size: 0.775rem; color: var(--color-primary); text-decoration: none;">
+                  {{ u.url|truncatechars:60 }}
+                </a>
+              </td>
+              <td>
+                {% if u.executive_details %}
+                  <span class="badge badge-info">{{ u.executive_details|length }} People</span>
+                {% else %}
+                  <span class="badge badge-neutral">None</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge badge-neutral">{{ u.total_chunks }}</span>
+              </td>
+              <td>
+                {% if u.is_indexed %}
+                  <span class="badge badge-success">&#10003; FAISS Ready</span>
+                {% else %}
+                  <span class="badge badge-warning">Unindexed</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'url_detail' u.id %}" class="btn btn-secondary btn-sm">Inspect Raw Data</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 3rem 1rem; color: var(--color-text-muted);">
+      <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">No Harvested Records in SQLite</p>
+      <p style="font-size: 0.875rem; margin-bottom: 1.25rem;">Start by uploading a CSV file with target URLs.</p>
+      <a href="{% url 'upload' %}" class="btn btn-primary">Upload CSV File</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

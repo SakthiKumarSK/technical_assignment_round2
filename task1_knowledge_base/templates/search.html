@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Semantic Search & Retrieval - URL Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">3. Semantic Query & Executive Retrieval</h1>
+    <p class="card-subtitle">
+      Query the FAISS vector database in natural language to retrieve relevant chunks,
+      executive profiles, leadership roles, and grounded context summaries.
+    </p>
+  </div>
+
+  <form method="GET" action="{% url 'search' %}">
+    <div class="search-bar-wrapper">
+      <input type="text" name="q" value="{{ query }}" class="search-input" placeholder="e.g. Who is the CEO of Google and what is their background?" autofocus required>
+      <button type="submit" class="btn btn-primary" style="padding: 0 1.75rem; font-size: 1rem;">
+        Search Vector DB
+      </button>
+    </div>
+
+    <!-- Quick sample queries -->
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem;">
+      <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Sample Queries:</span>
+      <a href="?q=Who+is+the+CEO+of+Alphabet+and+Google%3F" class="badge badge-neutral" style="text-decoration: none; cursor: pointer;">Who is the CEO of Google?</a>
+      <a href="?q=What+is+Satya+Nadella%27s+role+and+career+history%3F" class="badge badge-neutral" style="text-decoration: none; cursor: pointer;">Satya Nadella background</a>
+      <a href="?q=Leadership+and+executives+in+AI+and+technology" class="badge badge-neutral" style="text-decoration: none; cursor: pointer;">Tech executives and roles</a>
+      <a href="?q=Who+leads+Nvidia+and+what+is+their+vision%3F" class="badge badge-neutral" style="text-decoration: none; cursor: pointer;">Nvidia leadership</a>
+    </div>
+  </form>
+</div>
+
+{% if query %}
+  {% if results and results.retrieved_chunks %}
+    <!-- LLM / Extractive Synthesized Summary Box -->
+    <div class="synthesis-box">
+      <div class="synthesis-title">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg>
+        <span>Grounded Knowledge Synthesis</span>
+        <span class="badge badge-info" style="margin-left: auto; font-size: 0.75rem;">
+          {{ results.latency_seconds }}s &bull; Top {{ results.total_results }} Chunks
+        </span>
+      </div>
+      <div class="synthesis-body">
+        {{ results.summary|linebreaks }}
+      </div>
+    </div>
+
+    <!-- Extracted Person / Executive Profiles -->
+    {% if results.relevant_executives %}
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title" style="font-size: 1.1rem; color: var(--color-text-main);">
+            Extracted Executive & Person Profiles ({{ results.relevant_executives|length }})
+          </h2>
+          <p class="card-subtitle">Structured entities detected in matching URL sources</p>
+        </div>
+        <div class="exec-grid">
+          {% for ex in results.relevant_executives %}
+            <div class="exec-card">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="exec-name">{{ ex.name }}</div>
+                <span class="badge badge-success">{{ ex.role }}</span>
+              </div>
+              <p class="exec-bio">{{ ex.bio }}</p>
+              {% if ex.source_url %}
+                <a href="{{ ex.source_url }}" target="_blank" style="font-size: 0.75rem; color: var(--color-primary); text-decoration: none; margin-top: auto;">
+                  &rarr; Source: {{ ex.source_url|truncatechars:45 }}
+                </a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Top-K Retrieved Chunks -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title" style="font-size: 1.1rem;">
+          Top Retrieved Vector Chunks ({{ results.retrieved_chunks|length }})
+        </h2>
+        <p class="card-subtitle">Ranked by FAISS cosine similarity against query embeddings</p>
+      </div>
+
+      {% for chunk in results.retrieved_chunks %}
+        <div class="chunk-card">
+          <div class="chunk-header">
+            <div>
+              <a href="{{ chunk.url }}" target="_blank" class="chunk-source">{{ chunk.page_title|default:chunk.url }}</a>
+              <span style="font-size: 0.775rem; color: var(--color-text-muted); margin-left: 0.5rem;">
+                Chunk #{{ chunk.chunk_index }}
+              </span>
+            </div>
+            <div>
+              <span class="badge badge-info">Similarity: {{ chunk.similarity_percent }}%</span>
+              {% if chunk.has_person_info %}
+                <span class="badge badge-success" style="margin-left: 0.25rem;">Executive Info</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="chunk-text">
+            {{ chunk.chunk_text }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="card" style="text-align: center; padding: 3rem 1rem;">
+      <p style="font-size: 1.1rem; font-weight: 600; color: var(--color-text-main); margin-bottom: 0.5rem;">
+        No relevant results found for "{{ query }}"
+      </p>
+      <p style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">
+        Try refining your query terms or upload more URLs to expand the vector index.
+      </p>
+      <a href="{% url 'upload' %}" class="btn btn-primary">Harvest New URLs</a>
+    </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

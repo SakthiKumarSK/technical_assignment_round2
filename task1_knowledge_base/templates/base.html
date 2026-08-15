@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Knowledge Base from CSV URLs{% endblock %} | Task 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="{% url 'home' %}" class="brand">
+        <div class="brand-icon">KB</div>
+        <span>URL Knowledge Base</span>
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Dashboard</a></li>
+          <li><a href="{% url 'upload' %}" class="nav-link {% if request.resolver_match.url_name == 'upload' %}active{% endif %}">Upload CSV</a></li>
+          <li><a href="{% url 'search' %}" class="nav-link {% if request.resolver_match.url_name == 'search' %}active{% endif %}">Semantic Search</a></li>
+          <li><a href="{% url 'url_list' %}" class="nav-link {% if request.resolver_match.url_name == 'url_list' %}active{% endif %}">SQLite Raw Data</a></li>
+          <li><a href="{% url 'api_url_list' %}" target="_blank" class="api-badge">GET /api/urls/</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="main-container">
+    {% if messages %}
+      <div class="alert-container">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="navbar-container" style="justify-content: center;">
+      <p>Technical Assignment – Round 2 &bull; Task 1: Django + DRF + SQLite + FAISS Vector Database</p>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - URL Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="card" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; margin-bottom: 2rem;">
+  <h1 style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+    Task 1: URL Knowledge Base & Semantic Engine
+  </h1>
+  <p style="opacity: 0.9; max-width: 800px; font-size: 0.95rem;">
+    Transforms CSV files containing web URLs into a structured and searchable vector knowledge base.
+    Features robust scraping, raw SQLite content persistence, FAISS vector indexing, and REST API exposure.
+  </p>
+  <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{% url 'upload' %}" class="btn" style="background: white; color: #0284c7; font-weight: 700;">Upload CSV File</a>
+    <a href="{% url 'search' %}" class="btn" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);">Query Knowledge Base</a>
+    <a href="{% url 'api_url_list' %}" target="_blank" class="btn" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);">Browse REST API</a>
+  </div>
+</div>
+
+<!-- Metrics Overview -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-label">Harvested URLs</div>
+    <div class="metric-value">{{ total_urls }}</div>
+    <div class="metric-hint">Persisted in SQLite database</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Vector Ingestion</div>
+    <div class="metric-value">{{ indexed_urls }}</div>
+    <div class="metric-hint">Indexed URLs in FAISS</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Stored Chunks</div>
+    <div class="metric-value">{{ total_chunks }}</div>
+    <div class="metric-hint">Text chunks for fine-grained search</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">FAISS Vectors</div>
+    <div class="metric-value">{{ faiss_count }}</div>
+    <div class="metric-hint">384-dim dense embeddings</div>
+  </div>
+</div>
+
+<!-- Recent Harvested URLs Table Preview -->
+<div class="card">
+  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h2 class="card-title">Recently Harvested Web Content</h2>
+      <p class="card-subtitle">Inspecting raw and extracted data from SQLite</p>
+    </div>
+    <a href="{% url 'url_list' %}" class="btn btn-secondary btn-sm">View All ({{ total_urls }})</a>
+  </div>
+
+  {% if recent_urls %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Page Title / URL</th>
+            <th>Executives Detected</th>
+            <th>Chunks</th>
+            <th>Scraped At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in recent_urls %}
+            <tr>
+              <td>
+                {% if u.http_status_code == 200 %}
+                  <span class="badge badge-success">HTTP 200</span>
+                {% elif u.http_status_code %}
+                  <span class="badge badge-danger">HTTP {{ u.http_status_code }}</span>
+                {% else %}
+                  <span class="badge badge-warning">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight: 600;">{{ u.page_title|default:"(No Title)"|truncatechars:45 }}</div>
+                <a href="{{ u.url }}" target="_blank" style="font-size: 0.775rem; color: var(--color-primary); text-decoration: none;">
+                  {{ u.url|truncatechars:55 }}
+                </a>
+              </td>
+              <td>
+                {% if u.executive_details %}
+                  <span class="badge badge-info">{{ u.executive_details|length }} People</span>
+                {% else %}
+                  <span class="badge badge-neutral">0</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge badge-neutral">{{ u.total_chunks }}</span>
+              </td>
+              <td style="font-size: 0.8rem; color: var(--color-text-muted);">
+                {{ u.created_at|date:"M d, H:i" }}
+              </td>
+              <td>
+                <a href="{% url 'url_detail' u.id %}" class="btn btn-secondary btn-sm">Inspect</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div style="text-align: center; padding: 2.5rem 1rem; color: var(--color-text-muted);">
+      <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">No URLs harvested yet</p>
+      <p style="font-size: 0.875rem; margin-bottom: 1.25rem;">Upload a CSV file or paste URLs to populate the SQLite & FAISS vector database.</p>
+      <a href="{% url 'upload' %}" class="btn btn-primary">Upload CSV File</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
