@@ -12,7 +12,7 @@ from .vector_db import kb_vector_db
 logger = logging.getLogger(__name__)
 
 
-def try_ollama_summarize(query: str, context: str, model: str = "llama3") -> str:
+def try_ollama_summarize(query: str, context: str, model: str = "llama3.2") -> str:
     """
     Attempts to call local Ollama instance for natural language synthesis.
     Returns generated text or None if Ollama is unreachable.
@@ -74,7 +74,7 @@ def generate_extractive_summary(query: str, chunks: List[Dict[str, Any]], execut
     return "\n".join(parts)
 
 
-def execute_semantic_query(query: str, top_k: int = 5, model_name: str = "llama3") -> Dict[str, Any]:
+def execute_semantic_query(query: str, top_k: int = 5, model_name: str = "llama3.2") -> Dict[str, Any]:
     """
     Orchestrates vector search, executive entity aggregation, and answer synthesis.
     """

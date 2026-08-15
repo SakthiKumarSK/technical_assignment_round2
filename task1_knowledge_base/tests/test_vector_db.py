@@ -21,8 +21,11 @@ def test_embedding_model_encode():
 
 
 @pytest.mark.django_db
-def test_faiss_knowledge_base_search(db):
+def test_faiss_knowledge_base_search(db, tmp_path):
+    # Redirect persistence to a temp dir so the committed developer index is untouched
     kb = FAISSKnowledgeBase()
+    kb.index_path = str(tmp_path / "kb_faiss.index")
+    kb.meta_path = str(tmp_path / "kb_faiss_meta.pkl")
     kb.reset_index()
 
     url_obj = HarvestedURL.objects.create(

@@ -73,7 +73,7 @@ class SemanticSearchRequestSerializer(serializers.Serializer):
     query = serializers.CharField(required=True, min_length=1, max_length=1000)
     top_k = serializers.IntegerField(default=5, min_value=1, max_value=20)
     filter_person = serializers.BooleanField(default=False)
-    model = serializers.CharField(default='llama3', required=False)
+    model = serializers.CharField(default='llama3.2', required=False)
 
 
 class URLHarvestRequestSerializer(serializers.Serializer):

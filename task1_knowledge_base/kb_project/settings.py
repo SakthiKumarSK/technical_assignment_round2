@@ -56,11 +56,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'kb_project.wsgi.application'
 
-# Database: SQLite3 persistence
+# Database: SQLite3 persistence.
+# DJANGO_DB_PATH lets containers point the database at a mounted volume.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('DJANGO_DB_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 

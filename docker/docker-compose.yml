@@ -1,4 +1,5 @@
-version: '3.8'
+# Compose Specification (the top-level `version` key is obsolete in Compose v2).
+name: technical-assignment-round2
 
 services:
   # Task 1: URL Harvester & Knowledge Base (Django + DRF + SQLite + FAISS)
@@ -10,10 +11,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # Only directories are bind-mounted: Compose would silently create a
+      # *directory* for a missing file source, which breaks SQLite.
       - ../task1_knowledge_base/vector_data:/app/vector_data
-      - ../task1_knowledge_base/db.sqlite3:/app/db.sqlite3
     environment:
       - DJANGO_DEBUG=True
+      - DJANGO_DB_PATH=/app/vector_data/db.sqlite3
       - EMBEDDING_MODEL=all-MiniLM-L6-v2
     restart: unless-stopped
 
@@ -31,7 +34,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8001
       - OLLAMA_BASE_URL=http://ollama:11434
-      - DEFAULT_LLM_MODEL=llama3
+      - DEFAULT_LLM_MODEL=llama3.2
       - EMBEDDING_MODEL_NAME=all-MiniLM-L6-v2
     depends_on:
       - ollama

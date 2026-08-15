@@ -153,6 +153,54 @@ class FAISSKnowledgeBase:
         if os.path.exists(self.meta_path):
             os.remove(self.meta_path)
 
+    def _remove_url_vectors(self, url_id) -> int:
+        """
+        Drops every vector belonging to url_id and rebuilds the FAISS index from the
+        remaining chunk texts, re-assigning sequential vector ids.
+        URLChunk rows of the surviving URLs are realigned to the new index positions.
+        Returns the number of vectors removed.
+        """
+        from .models import URLChunk
+
+        if self.index is None or not self.metadata:
+            return 0
+
+        remaining = [m for m in self.metadata if m.get('url_id') != url_id]
+        removed = len(self.metadata) - len(remaining)
+        if removed == 0:
+            return 0
+
+        # IndexFlatIP has no stable deletion, so the index is rebuilt from scratch
+        self.index = faiss.IndexFlatIP(self.dimension)
+        self.metadata = []
+
+        if remaining:
+            embedder = get_embedding_model()
+            texts = [m.get('chunk_text', '') or '' for m in remaining]
+            vectors = embedder.encode(texts, normalize_embeddings=True)
+            vectors = np.array(vectors, dtype=np.float32)
+            self.index.add(vectors)
+
+            shifted = []
+            for new_vector_id, meta in enumerate(remaining):
+                if meta.get('vector_id') != new_vector_id:
+                    shifted.append((meta.get('url_id'), meta.get('chunk_index'), new_vector_id))
+                meta['vector_id'] = new_vector_id
+                self.metadata.append(meta)
+
+            # Keep SQLite vector ids consistent with the rebuilt index positions
+            for other_url_id, chunk_index, new_vector_id in shifted:
+                URLChunk.objects.filter(
+                    harvested_url_id=other_url_id,
+                    chunk_index=chunk_index
+                ).update(vector_id=new_vector_id)
+
+        logger.info(
+            f"Removed {removed} stale vectors for url_id={url_id}; "
+            f"index rebuilt with {self.index.ntotal} vectors."
+        )
+        return removed
+
     def ingest_url(self, harvested_url) -> int:
         """
         Chunks and ingests a single HarvestedURL into the FAISS vector database.
@@ -175,8 +223,9 @@ class FAISSKnowledgeBase:
         vectors = embedder.encode(chunks, normalize_embeddings=True)
         vectors = np.array(vectors, dtype=np.float32)
 
-        # Remove previous chunks for this URL from SQLite if re-indexing
+        # Remove previous chunks for this URL from SQLite and from the vector index
         URLChunk.objects.filter(harvested_url=harvested_url).delete()
+        self._remove_url_vectors(harvested_url.id)
 
         start_vector_id = self.index.ntotal
         self.index.add(vectors)

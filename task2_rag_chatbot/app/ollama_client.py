@@ -11,6 +11,37 @@ from .models import ChatMessage
 
 logger = logging.getLogger(__name__)
 
+# Maximum number of previous turns injected into the prompt for pronoun resolution
+MAX_HISTORY_TURNS = 6
+HISTORY_HEADER = "RECENT CONVERSATION (REFERENCE ONLY - NOT A SOURCE OF FACTS):"
+
+
+def _build_history_block(history: Optional[List[ChatMessage]]) -> str:
+    """
+    Renders the last MAX_HISTORY_TURNS turns as a reference-only block.
+    Returns an empty string when there is no usable history.
+    """
+    if not history:
+        return ""
+
+    turns = []
+    for msg in history[-MAX_HISTORY_TURNS:]:
+        content = (msg.content or "").strip()
+        if not content:
+            continue
+        turns.append(f"{(msg.role or 'user').strip().upper()}: {content}")
+
+    if not turns:
+        return ""
+
+    rendered = "\n".join(turns)
+    return (
+        f"\n{HISTORY_HEADER}\n"
+        "Use the exchange below ONLY to understand what the user is referring to "
+        "(pronouns, follow-up phrasing). Never cite it and never treat it as evidence.\n"
+        f"{rendered}\n"
+    )
+
 
 def build_grounded_prompt(
     question: str,
@@ -31,6 +62,7 @@ def build_grounded_prompt(
         )
 
     context_str = "\n\n".join(context_sections) if context_sections else "No source context available."
+    history_block = _build_history_block(history)
 
     prompt = f"""You are a precise, grounded AI assistant answering questions based SOLELY on the provided retrieved source documents.
 
@@ -43,7 +75,7 @@ GROUNDING RULES:
 
 CONTEXT:
 {context_str}
-
+{history_block}
 USER QUESTION:
 {question}
 
@@ -76,15 +108,15 @@ class OllamaClient:
                 if resp.status_code == 200:
                     data = resp.json()
                     models = [m.get("name") for m in data.get("models", [])]
-                    return models if models else ["llama3"]
+                    return models if models else ["llama3.2"]
         except Exception:
             pass
-        return ["llama3", "mistral", "phi3"]
+        return ["llama3.2", "qwen3:4b", "gemma3:4b"]
 
     async def generate_response(
         self,
         prompt: str,
-        model: str = "llama3",
+        model: str = "llama3.2",
         temperature: float = 0.2
     ) -> str:
         """
@@ -118,7 +150,7 @@ class OllamaClient:
     async def stream_response(
         self,
         prompt: str,
-        model: str = "llama3",
+        model: str = "llama3.2",
         temperature: float = 0.2
     ) -> AsyncGenerator[str, None]:
         """
@@ -164,7 +196,9 @@ class OllamaClient:
         """
         # Extract context block from prompt
         if "CONTEXT:" in prompt and "USER QUESTION:" in prompt:
-            context_part = prompt.split("CONTEXT:")[1].split("USER QUESTION:")[0].strip()
+            context_part = prompt.split("CONTEXT:")[1].split("USER QUESTION:")[0]
+            # The reference-only history block must never be synthesized as document evidence
+            context_part = context_part.split(HISTORY_HEADER)[0].strip()
             question_part = prompt.split("USER QUESTION:")[1].split("GROUNDED ANSWER:")[0].strip()
             
             if "No source context available" in context_part or not context_part:

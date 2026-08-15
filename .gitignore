@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -44,6 +45,7 @@ htmlcov/
 chroma_db/
 faiss_index/
 vector_cache/
+**/data/uploaded_docs/
 
 # Environments & IDEs
 .env

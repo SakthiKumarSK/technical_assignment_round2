@@ -22,7 +22,7 @@ class SourceCitation(BaseModel):
 
 class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000, description="User question to answer")
-    model: Optional[str] = Field(default="llama3", description="Ollama model name (e.g. llama3, mistral, phi3)")
+    model: Optional[str] = Field(default="llama3.2", description="Ollama model name (e.g. llama3.2, qwen3:4b, gemma3:4b)")
     top_k: Optional[int] = Field(default=4, ge=1, le=15, description="Number of context chunks to retrieve")
     temperature: Optional[float] = Field(default=0.2, ge=0.0, le=1.0)
     history: Optional[List[ChatMessage]] = Field(default=[], description="Previous conversation turns")

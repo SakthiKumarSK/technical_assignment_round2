@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const citationsEl = assistantRow.querySelector('#current-citations');
 
     try {
-      const selectedModel = modelSelect.value || 'llama3';
+      const selectedModel = modelSelect.value || 'llama3.2';
       const payload = {
         question: question,
         model: selectedModel,

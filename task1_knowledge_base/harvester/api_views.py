@@ -227,7 +227,7 @@ class SemanticSearchAPIView(APIView):
 
         query = serializer.validated_data['query']
         top_k = serializer.validated_data.get('top_k', 5)
-        model = serializer.validated_data.get('model', 'llama3')
+        model = serializer.validated_data.get('model', 'llama3.2')
 
         search_response = execute_semantic_query(query=query, top_k=top_k, model_name=model)
         return Response(search_response, status=status.HTTP_200_OK)
